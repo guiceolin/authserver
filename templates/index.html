@@ -1,5 +1,7 @@
-{{if .CurrentUser}}
-  Hello, {{.CurrentUser.Name}}
-{{else}}
-  <a>Login</a>
+{{define "index"}}
+  {{if .CurrentUser}}
+    Hello, {{.CurrentUser.Name}}
+  {{else}}
+    <a>Login</a>
+  {{end}}
 {{end}}
