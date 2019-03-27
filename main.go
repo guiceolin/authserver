@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"time"
 
 	"github.com/astaxie/beego/orm"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/guiceolin/authserver/logger"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 
@@ -141,7 +141,7 @@ func init() {
 func main() {
 	tmpl, err := template.ParseGlob("templates/**/*")
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	s := server{
 		router: httprouter.New(),
@@ -149,5 +149,5 @@ func main() {
 		tmpl:   tmpl}
 	s.routes()
 
-	log.Fatal(http.ListenAndServe(":"+viper.GetString("port"), s.router))
+	logger.Fatal(http.ListenAndServe(":"+viper.GetString("port"), s.router))
 }
