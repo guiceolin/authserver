@@ -129,6 +129,9 @@ func init() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
+
+	logger.LogLevel = viper.GetString("log_level")
+
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}

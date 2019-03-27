@@ -2,23 +2,16 @@ package logger
 
 import (
 	"log"
-	"os"
 )
 
-var logLevel = "INFO"
-
-func init() {
-	if value, ok := os.LookupEnv("LOG_LEVEL"); ok {
-		logLevel = value
-	}
-}
+var LogLevel = "INFO"
 
 func Info(v ...interface{}) {
 	log.Print(v...)
 }
 
 func Debug(v ...interface{}) {
-	if logLevel == "DEBUG" {
+	if LogLevel == "DEBUG" {
 		log.Print(v...)
 	}
 }
