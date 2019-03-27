@@ -11,6 +11,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	jwt "github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -128,6 +129,15 @@ func init() {
 	orm.RegisterDriver("postgres", orm.DRPostgres)
 	orm.RegisterDataBase("default", "postgres", "user=postgres host=127.0.0.1 port=5432 dbname=authserver sslmode=disable")
 	orm.RunSyncdb("default", false, true)
+
+	viper.AutomaticEnv()
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
 }
 
 func main() {
