@@ -1,0 +1,4 @@
+jwt_secret: "MYAWESOMESECRETKEY"
+domain: localhost
+port: 8080
+database_url: "postgres://postgres@127.0.0.1:5432/authserver?sslmode=disable"

@@ -72,7 +72,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			return
 		}
 
-		var jwtKey = []byte("my_secret_key")
+		var jwtKey = []byte(viper.GetString("jwt_secret"))
 
 		// Declare the expiration time of the token
 		// here, we have kept it as 5 minutes
@@ -102,7 +102,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			Name:    "token",
 			Value:   tokenString,
 			Expires: expirationTime,
-			Domain:  "localhost",
+			Domain:  viper.GetString("domain"),
 		})
 
 	}
@@ -125,11 +125,6 @@ func (s *server) handleIndex() http.HandlerFunc {
 }
 
 func init() {
-	orm.RegisterModel(new(User))
-	orm.RegisterDriver("postgres", orm.DRPostgres)
-	orm.RegisterDataBase("default", "postgres", "user=postgres host=127.0.0.1 port=5432 dbname=authserver sslmode=disable")
-	orm.RunSyncdb("default", false, true)
-
 	viper.AutomaticEnv()
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
@@ -137,7 +132,10 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
-
+	orm.RegisterModel(new(User))
+	orm.RegisterDriver("postgres", orm.DRPostgres)
+	orm.RegisterDataBase("default", "postgres", viper.GetString("database_url"))
+	orm.RunSyncdb("default", false, true)
 }
 
 func main() {
@@ -151,5 +149,5 @@ func main() {
 		tmpl:   tmpl}
 	s.routes()
 
-	log.Fatal(http.ListenAndServe(":8080", s.router))
+	log.Fatal(http.ListenAndServe(":"+viper.GetString("port"), s.router))
 }
