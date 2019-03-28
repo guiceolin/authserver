@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -46,12 +45,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 		jwt.StandardClaims
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		requestDump, err := httputil.DumpRequest(r, true)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(string(requestDump))
+		logger.LogRequest(r)
 
 		r.ParseForm()
 		creds := Credentials{
