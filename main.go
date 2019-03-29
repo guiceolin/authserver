@@ -28,6 +28,10 @@ type User struct {
 	Password string `json:"-"`
 }
 
+func (s User) CheckPassword(password string) bool {
+	return s.Password == password
+}
+
 func buildJWT(payload interface{}, expirationTime time.Time) (string, error) {
 	type Claims struct {
 		Payload interface{} `json:"payload"`
@@ -55,29 +59,21 @@ func (s *server) routes() {
 }
 
 func (s *server) handleCreateSession() http.HandlerFunc {
-	type Credentials struct {
-		Password string `json:"password"`
-		Email    string `json:"email"`
-	}
 	var expirationTime = time.Now().Add(5 * time.Minute)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
 
 		r.ParseForm()
-		creds := Credentials{
-			Email:    r.FormValue("email"),
-			Password: r.FormValue("password"),
-		}
 
-		user := User{Email: creds.Email}
+		user := User{Email: r.FormValue("email")}
 		err := s.db.Read(&user, "Email")
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
-		if user.Password != creds.Password {
+		if !user.CheckPassword(r.FormValue("password")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
