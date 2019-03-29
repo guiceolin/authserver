@@ -73,8 +73,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 		user := User{Email: creds.Email}
 		err := s.db.Read(&user, "Email")
 		if err != nil {
-			// If the structure of the body is wrong, return an HTTP error
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
