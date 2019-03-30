@@ -79,6 +79,11 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
 
+		if IsAuthenticated(r) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
 		r.ParseForm()
 
 		user := User{Email: r.FormValue("email")}
