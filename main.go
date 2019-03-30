@@ -116,16 +116,24 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 
 func (s *server) handleNewSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if IsAuthenticated(r) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
 		s.tmpl.ExecuteTemplate(w, "sessions/new", nil)
 
 	}
 }
 
 func (s *server) handleIndex() http.HandlerFunc {
-	data := struct {
-		CurrentUser *User
-	}{}
 	return func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			CurrentUser *User
+		}{
+			CurrentUser: s.getCurrentUser(r),
+		}
+		logger.Info(s.tmpl.DefinedTemplates())
 		s.tmpl.ExecuteTemplate(w, "index", data)
 	}
 }
