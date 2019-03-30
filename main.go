@@ -71,6 +71,7 @@ func (s *server) routes() {
 	s.router.HandlerFunc("GET", "/", s.handleIndex())
 	s.router.HandlerFunc("GET", "/sessions/new", s.handleNewSession())
 	s.router.HandlerFunc("POST", "/sessions", s.handleCreateSession())
+	s.router.HandlerFunc("GET", "/sessions/destroy", s.handleDeleteSession())
 }
 
 func (s *server) handleCreateSession() http.HandlerFunc {
@@ -129,6 +130,26 @@ func (s *server) handleNewSession() http.HandlerFunc {
 		}
 
 		s.tmpl.ExecuteTemplate(w, "sessions/new", nil)
+
+	}
+}
+
+func (s *server) handleDeleteSession() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !IsAuthenticated(r) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		c := &http.Cookie{
+			Name:    "token",
+			Value:   "",
+			Path:    "/",
+			Expires: time.Unix(0, 0),
+		}
+
+		http.SetCookie(w, c)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 
 	}
 }

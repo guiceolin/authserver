@@ -2,8 +2,10 @@
   <div>
     {{if .CurrentUser}}
       Hello, {{.CurrentUser.Name}}
+      <br />
+      <a href='/sessions/destroy'>Logout</a>
     {{else}}
-      <a>Login</a>
+      <a href='/sessions/new'>Login</a>
     {{end}}
   </div>
 {{end}}
