@@ -2,21 +2,26 @@ package jwt
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 )
 
+type Payload struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 type Claims struct {
-	Payload interface{} `json:"payload"`
+	Payload `json:"payload"`
 	jwt.StandardClaims
 }
 
 var jwtKey = []byte(viper.GetString("jwt_secret"))
 
-func BuildJWT(payload interface{}, expirationTime time.Time) (string, error) {
+func BuildJWT(payload Payload, expirationTime time.Time) (string, error) {
 	claims := &Claims{
 		Payload: payload,
 		StandardClaims: jwt.StandardClaims{
@@ -30,9 +35,9 @@ func BuildJWT(payload interface{}, expirationTime time.Time) (string, error) {
 
 }
 
-func ValidateJWT(tknStr string) (interface{}, error) {
+func ValidateJWT(tknStr string) (*Payload, error) {
 	claims := &Claims{}
-	tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
+	_, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 	if err != nil {
@@ -42,5 +47,5 @@ func ValidateJWT(tknStr string) (interface{}, error) {
 		return nil, err
 	}
 
-	return tkn, nil
+	return &claims.Payload, nil
 }

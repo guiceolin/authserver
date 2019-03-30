@@ -58,7 +58,12 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			return
 		}
 
-		tokenString, err := jwt.BuildJWT(user, expirationTime)
+		payload := jwt.Payload{
+			Id:    user.Id,
+			Name:  user.Name,
+			Email: user.Email,
+		}
+		tokenString, err := jwt.BuildJWT(payload, expirationTime)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
