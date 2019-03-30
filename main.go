@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/astaxie/beego/orm"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/guiceolin/authserver/jwt"
 	"github.com/guiceolin/authserver/logger"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -30,26 +30,6 @@ type User struct {
 
 func (s User) CheckPassword(password string) bool {
 	return s.Password == password
-}
-
-func buildJWT(payload interface{}, expirationTime time.Time) (string, error) {
-	type Claims struct {
-		Payload interface{} `json:"payload"`
-		jwt.StandardClaims
-	}
-
-	var jwtKey = []byte(viper.GetString("jwt_secret"))
-	claims := &Claims{
-		Payload: payload,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	return tokenString, err
-
 }
 
 func (s *server) routes() {
@@ -78,7 +58,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			return
 		}
 
-		tokenString, err := buildJWT(user, expirationTime)
+		tokenString, err := jwt.BuildJWT(user, expirationTime)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
