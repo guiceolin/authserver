@@ -32,6 +32,41 @@ func (s User) CheckPassword(password string) bool {
 	return s.Password == password
 }
 
+func IsAuthenticated(r *http.Request) bool {
+	c, err := r.Cookie("token")
+	if err != nil {
+		return false
+	}
+
+	_, err = jwt.ValidateJWT(c.Value)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (s *server) getCurrentUser(r *http.Request) *User {
+	c, err := r.Cookie("token")
+	if err != nil {
+		return nil
+	}
+
+	payload, err := jwt.ValidateJWT(c.Value)
+	if err != nil {
+		return nil
+	}
+
+	user := User{
+		Id: payload.Id,
+	}
+	err = s.db.Read(&user)
+	if err != nil {
+		return nil
+	}
+
+	return &user
+}
+
 func (s *server) routes() {
 	s.router.HandlerFunc("GET", "/", s.handleIndex())
 	s.router.HandlerFunc("GET", "/sessions/new", s.handleNewSession())
