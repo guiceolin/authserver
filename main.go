@@ -156,7 +156,7 @@ func init() {
 }
 
 func main() {
-	tmpl, err := template.ParseGlob("templates/**/*")
+	tmpl, err := template.ParseGlob("templates/*")
 	if err != nil {
 		logger.Fatal(err)
 	}
