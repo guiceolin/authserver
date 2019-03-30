@@ -116,6 +116,8 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			Domain:  viper.GetString("domain"),
 		})
 
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
 }
 
