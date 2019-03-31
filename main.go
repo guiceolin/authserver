@@ -75,7 +75,7 @@ func (s *server) routes() {
 }
 
 func (s *server) handleCreateSession() http.HandlerFunc {
-	var expirationTime = time.Now().Add(5 * time.Minute)
+	var expirationTime = time.Now().Add(5 * time.Hour)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
