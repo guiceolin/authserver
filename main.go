@@ -144,8 +144,8 @@ func (s *server) handleDeleteSession() http.HandlerFunc {
 		c := &http.Cookie{
 			Name:    "token",
 			Value:   "",
-			Path:    "/",
 			Expires: time.Unix(0, 0),
+			Domain:  viper.GetString("domain"),
 		}
 
 		http.SetCookie(w, c)
