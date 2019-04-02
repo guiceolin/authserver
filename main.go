@@ -32,6 +32,31 @@ func (s User) CheckPassword(password string) bool {
 	return s.Password == password
 }
 
+
+func SetCurrentUser(w http.ResponseWriter, user User) {
+	var expirationTime = time.Now().Add(5 * time.Hour)
+
+	payload := jwt.Payload{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+	tokenString, err := jwt.BuildJWT(payload, expirationTime)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "token",
+		Value:   tokenString,
+		Path:    "/",
+		Expires: expirationTime,
+		Domain:  viper.GetString("domain"),
+	})
+
+}
+
 func IsAuthenticated(r *http.Request) bool {
 	c, err := r.Cookie("token")
 	if err != nil {
@@ -75,7 +100,6 @@ func (s *server) routes() {
 }
 
 func (s *server) handleCreateSession() http.HandlerFunc {
-	var expirationTime = time.Now().Add(5 * time.Hour)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
@@ -99,24 +123,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			return
 		}
 
-		payload := jwt.Payload{
-			Id:    user.Id,
-			Name:  user.Name,
-			Email: user.Email,
-		}
-		tokenString, err := jwt.BuildJWT(payload, expirationTime)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:    "token",
-			Value:   tokenString,
-			Path:    "/",
-			Expires: expirationTime,
-			Domain:  viper.GetString("domain"),
-		})
+		SetCurrentUser(w, user)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
