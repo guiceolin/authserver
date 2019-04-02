@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -22,16 +23,42 @@ type server struct {
 }
 
 type User struct {
-	Id       int    `orm:"auto" json:"id"`
-	Name     string `orm:"size(100)" json:"name"`
-	Email    string `orm:"unique" json:"email"`
-	Password string `json:"-"`
+	Id       int               `orm:"auto" json:"id"`
+	Name     string            `orm:"size(100)" json:"name"`
+	Email    string            `orm:"unique" json:"email"`
+	Password string            `json:"-"`
+	Errors   map[string]string `json:"-" orm:"-"`
 }
 
 func (s User) CheckPassword(password string) bool {
 	return s.Password == password
 }
 
+func (s *User) Validate(db orm.Ormer) bool {
+	s.Errors = make(map[string]string)
+
+	if s.Email == "" {
+		s.Errors["Email"] = "Can't be blank"
+	}
+
+	Re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	if !Re.MatchString(s.Email) {
+		s.Errors["Email"] = "Is invalid"
+	}
+
+	if db.QueryTable("user").Filter("email", s.Email).Exist() {
+		s.Errors["Email"] = "Already taken"
+	}
+
+	if s.Password == "" {
+		s.Errors["Password"] = "Can't be blank"
+	}
+	if s.Name == "" {
+		s.Errors["Name"] = "Can't be blank"
+	}
+
+	return len(s.Errors) == 0
+}
 
 func SetCurrentUser(w http.ResponseWriter, user User) {
 	var expirationTime = time.Now().Add(5 * time.Hour)
@@ -97,6 +124,57 @@ func (s *server) routes() {
 	s.router.HandlerFunc("GET", "/sessions/new", s.handleNewSession())
 	s.router.HandlerFunc("POST", "/sessions", s.handleCreateSession())
 	s.router.HandlerFunc("GET", "/sessions/destroy", s.handleDeleteSession())
+
+	s.router.HandlerFunc("GET", "/users/new", s.handleNewUser())
+	s.router.HandlerFunc("POST", "/users", s.handleCreateUser())
+}
+
+func (s *server) handleNewUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.LogRequest(r)
+
+		if IsAuthenticated(r) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		s.tmpl.ExecuteTemplate(w, "users/new", nil)
+
+	}
+}
+
+func (s *server) handleCreateUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.LogRequest(r)
+
+		if IsAuthenticated(r) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		r.ParseForm()
+
+		user := User{
+			Name:     r.FormValue("name"),
+			Email:    r.FormValue("email"),
+			Password: r.FormValue("password"),
+		}
+
+		if user.Validate(s.db) {
+			_, err := s.db.Insert(&user)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			SetCurrentUser(w, user)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		logger.Info(user.Errors)
+		s.tmpl.ExecuteTemplate(w, "users/new", user)
+	}
 }
 
 func (s *server) handleCreateSession() http.HandlerFunc {

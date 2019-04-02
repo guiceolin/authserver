@@ -1,0 +1,10 @@
+{{define "users/new"}}
+<div>
+  <form method="POST" action="/users">
+    <label> Name </label><input type="text" name="name" value="{{.Name}}" /><span>{{.Errors.Name}}</span><br />
+    <label> Email </label><input type="text" name="email" value="{{.Email}}" /><span>{{.Errors.Email}}</span><br />
+    <label> Password</label><input type="password" name="password" /><br />
+    <input type="submit" value="Create">
+  </form>
+</div>
+{{end}}
