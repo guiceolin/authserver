@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"net/http"
-	"regexp"
-	"time"
-
 	"github.com/astaxie/beego/orm"
 	"github.com/guiceolin/authserver/jwt"
 	"github.com/guiceolin/authserver/logger"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/bcrypt"
+	"html/template"
+	"net/http"
+	"regexp"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -26,13 +26,27 @@ type User struct {
 	Id                   int               `orm:"auto" json:"id"`
 	Name                 string            `orm:"size(100)" json:"name"`
 	Email                string            `orm:"unique" json:"email"`
-	Password             string            `json:"-"`
+	EncryptedPassword    string            `json:"-"`
+	Password             string            `json:"-" orm:"-"`
 	PasswordConfirmation string            `json:"-" orm:"-"`
 	Errors               map[string]string `json:"-" orm:"-"`
 }
 
 func (s User) CheckPassword(password string) bool {
-	return s.Password == password
+	err := bcrypt.CompareHashAndPassword([]byte(s.EncryptedPassword), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (s *User) EncryptPassword() error {
+	saltedPass, err := bcrypt.GenerateFromPassword([]byte(s.Password), 10)
+	if err != nil {
+		return err
+	}
+	s.EncryptedPassword = string(saltedPass)
+	return nil
 }
 
 func (s *User) Validate(db orm.Ormer) bool {
@@ -172,6 +186,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 		}
 
 		if user.Validate(s.db) {
+			user.EncryptPassword()
 			_, err := s.db.Insert(&user)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
