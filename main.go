@@ -23,11 +23,12 @@ type server struct {
 }
 
 type User struct {
-	Id       int               `orm:"auto" json:"id"`
-	Name     string            `orm:"size(100)" json:"name"`
-	Email    string            `orm:"unique" json:"email"`
-	Password string            `json:"-"`
-	Errors   map[string]string `json:"-" orm:"-"`
+	Id                   int               `orm:"auto" json:"id"`
+	Name                 string            `orm:"size(100)" json:"name"`
+	Email                string            `orm:"unique" json:"email"`
+	Password             string            `json:"-"`
+	PasswordConfirmation string            `json:"-" orm:"-"`
+	Errors               map[string]string `json:"-" orm:"-"`
 }
 
 func (s User) CheckPassword(password string) bool {
@@ -53,6 +54,15 @@ func (s *User) Validate(db orm.Ormer) bool {
 	if s.Password == "" {
 		s.Errors["Password"] = "Can't be blank"
 	}
+
+	if s.Password != s.PasswordConfirmation {
+		s.Errors["PasswordConfirmation"] = "Must be equals password"
+	}
+
+	if s.PasswordConfirmation == "" {
+		s.Errors["PasswordConfirmation"] = "Can't be blank"
+	}
+
 	if s.Name == "" {
 		s.Errors["Name"] = "Can't be blank"
 	}
@@ -155,9 +165,10 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 		r.ParseForm()
 
 		user := User{
-			Name:     r.FormValue("name"),
-			Email:    r.FormValue("email"),
-			Password: r.FormValue("password"),
+			Name:                 r.FormValue("name"),
+			Email:                r.FormValue("email"),
+			Password:             r.FormValue("password"),
+			PasswordConfirmation: r.FormValue("password_confirmation"),
 		}
 
 		if user.Validate(s.db) {

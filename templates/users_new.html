@@ -3,7 +3,8 @@
   <form method="POST" action="/users">
     <label> Name </label><input type="text" name="name" value="{{.Name}}" /><span>{{.Errors.Name}}</span><br />
     <label> Email </label><input type="text" name="email" value="{{.Email}}" /><span>{{.Errors.Email}}</span><br />
-    <label> Password</label><input type="password" name="password" /><br />
+    <label> Password</label><input type="password" name="password" /><span>{{.Errors.Password}}</span><br />
+    <label> Password Confirmation</label><input type="password" name="password_confirmation" /><span>{{.Errors.PasswordConfirmation}}</span><br />
     <input type="submit" value="Create">
   </form>
 </div>
