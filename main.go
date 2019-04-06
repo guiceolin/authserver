@@ -84,6 +84,15 @@ func (s *User) Validate(db orm.Ormer) bool {
 	return len(s.Errors) == 0
 }
 
+func RenderWithTemplate(w http.ResponseWriter, templateName string, data interface{}) {
+	templateFile := fmt.Sprintf("templates/%s", templateName)
+	tmpl, err := template.New("").ParseFiles(templateFile, "templates/layout.html")
+	if err != nil {
+		logger.Fatal(err)
+	}
+	tmpl.ExecuteTemplate(w, "base", data)
+}
+
 func SetCurrentUser(w http.ResponseWriter, user User) {
 	var expirationTime = time.Now().Add(5 * time.Hour)
 
@@ -161,9 +170,7 @@ func (s *server) handleNewUser() http.HandlerFunc {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-
-		s.tmpl.ExecuteTemplate(w, "users/new", nil)
-
+		RenderWithTemplate(w, "users_new.html", nil)
 	}
 }
 
@@ -199,7 +206,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 		}
 
 		logger.Info(user.Errors)
-		s.tmpl.ExecuteTemplate(w, "users/new", user)
+		RenderWithTemplate(w, "users_new.html", user)
 	}
 }
 
@@ -241,8 +248,7 @@ func (s *server) handleNewSession() http.HandlerFunc {
 			return
 		}
 
-		s.tmpl.ExecuteTemplate(w, "sessions/new", nil)
-
+		RenderWithTemplate(w, "session_new.html", nil)
 	}
 }
 
@@ -273,8 +279,7 @@ func (s *server) handleIndex() http.HandlerFunc {
 		}{
 			CurrentUser: s.getCurrentUser(r),
 		}
-		logger.Info(s.tmpl.DefinedTemplates())
-		s.tmpl.ExecuteTemplate(w, "index", data)
+		RenderWithTemplate(w, "index.html", data)
 	}
 }
 
@@ -296,14 +301,9 @@ func init() {
 }
 
 func main() {
-	tmpl, err := template.ParseGlob("templates/*")
-	if err != nil {
-		logger.Fatal(err)
-	}
 	s := server{
 		router: httprouter.New(),
-		db:     orm.NewOrm(),
-		tmpl:   tmpl}
+		db:     orm.NewOrm()}
 	s.routes()
 
 	logger.Fatal(http.ListenAndServe(":"+viper.GetString("port"), s.router))
