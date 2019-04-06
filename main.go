@@ -32,7 +32,7 @@ type User struct {
 	Errors               map[string]string `json:"-" orm:"-"`
 }
 
-func (s User) CheckPassword(password string) bool {
+func (s User) checkPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(s.EncryptedPassword), []byte(password))
 	if err != nil {
 		return false
@@ -40,7 +40,7 @@ func (s User) CheckPassword(password string) bool {
 	return true
 }
 
-func (s *User) EncryptPassword() error {
+func (s *User) encryptPassword() error {
 	saltedPass, err := bcrypt.GenerateFromPassword([]byte(s.Password), 10)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (s *User) EncryptPassword() error {
 	return nil
 }
 
-func (s *User) Validate(db orm.Ormer) bool {
+func (s *User) validate(db orm.Ormer) bool {
 	s.Errors = make(map[string]string)
 
 	if s.Email == "" {
@@ -93,7 +93,7 @@ func renderWithTemplate(w http.ResponseWriter, templateName string, data interfa
 	tmpl.ExecuteTemplate(w, "base", data)
 }
 
-func SetCurrentUser(w http.ResponseWriter, user User) {
+func setCurrentUser(w http.ResponseWriter, user User) {
 	var expirationTime = time.Now().Add(5 * time.Hour)
 
 	payload := jwt.Payload{
@@ -117,7 +117,7 @@ func SetCurrentUser(w http.ResponseWriter, user User) {
 
 }
 
-func IsAuthenticated(r *http.Request) bool {
+func isAuthenticated(r *http.Request) bool {
 	c, err := r.Cookie("token")
 	if err != nil {
 		return false
@@ -166,7 +166,7 @@ func (s *server) handleNewUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
 
-		if IsAuthenticated(r) {
+		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -178,7 +178,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
 
-		if IsAuthenticated(r) {
+		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -192,15 +192,15 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 			PasswordConfirmation: r.FormValue("password_confirmation"),
 		}
 
-		if user.Validate(s.db) {
-			user.EncryptPassword()
+		if user.validate(s.db) {
+			user.encryptPassword()
 			_, err := s.db.Insert(&user)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			SetCurrentUser(w, user)
+			setCurrentUser(w, user)
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -215,7 +215,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.LogRequest(r)
 
-		if IsAuthenticated(r) {
+		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -229,12 +229,12 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 			return
 		}
 
-		if !user.CheckPassword(r.FormValue("password")) {
+		if !user.checkPassword(r.FormValue("password")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		SetCurrentUser(w, user)
+		setCurrentUser(w, user)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -243,7 +243,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 
 func (s *server) handleNewSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if IsAuthenticated(r) {
+		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -254,7 +254,7 @@ func (s *server) handleNewSession() http.HandlerFunc {
 
 func (s *server) handleDeleteSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !IsAuthenticated(r) {
+		if !isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
