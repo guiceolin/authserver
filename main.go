@@ -84,7 +84,7 @@ func (s *User) Validate(db orm.Ormer) bool {
 	return len(s.Errors) == 0
 }
 
-func RenderWithTemplate(w http.ResponseWriter, templateName string, data interface{}) {
+func renderWithTemplate(w http.ResponseWriter, templateName string, data interface{}) {
 	templateFile := fmt.Sprintf("templates/%s", templateName)
 	tmpl, err := template.New("").ParseFiles(templateFile, "templates/layout.html")
 	if err != nil {
@@ -170,7 +170,7 @@ func (s *server) handleNewUser() http.HandlerFunc {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		RenderWithTemplate(w, "users_new.html", nil)
+		renderWithTemplate(w, "users_new.html", nil)
 	}
 }
 
@@ -206,7 +206,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 		}
 
 		logger.Info(user.Errors)
-		RenderWithTemplate(w, "users_new.html", user)
+		renderWithTemplate(w, "users_new.html", user)
 	}
 }
 
@@ -248,7 +248,7 @@ func (s *server) handleNewSession() http.HandlerFunc {
 			return
 		}
 
-		RenderWithTemplate(w, "session_new.html", nil)
+		renderWithTemplate(w, "session_new.html", nil)
 	}
 }
 
@@ -279,7 +279,7 @@ func (s *server) handleIndex() http.HandlerFunc {
 		}{
 			CurrentUser: s.getCurrentUser(r),
 		}
-		RenderWithTemplate(w, "index.html", data)
+		renderWithTemplate(w, "index.html", data)
 	}
 }
 
