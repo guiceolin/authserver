@@ -1,13 +1,11 @@
 {{define "content"}}
-  <div>
     {{if .CurrentUser}}
       Hello, {{.CurrentUser.Name}}
       <br />
       <a href='/sessions/destroy'>Sign out</a>
     {{else}}
-      <a href='/sessions/new'>Sign in</a>
-      or
-      <a href='/users/new'>Sign up</a>
+          <p>
+            <a href='/sessions/new'>Sign in</a> or <a href='/users/new'>Sign up</a>
+          </p>
     {{end}}
-  </div>
 {{end}}
