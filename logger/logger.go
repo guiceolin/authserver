@@ -24,7 +24,7 @@ func Fatal(v ...interface{}) {
 	log.Fatal(v...)
 }
 
-func LogRequest(r *http.Request) {
+func logRequest(r *http.Request) {
 	requestDump, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		Info(err)
@@ -34,6 +34,8 @@ func LogRequest(r *http.Request) {
 
 func RequestMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logRequest(r)
+
 		start := time.Now()
 		Info(fmt.Sprintf("Started %s %s for %s at %s", r.Method, r.URL, r.RemoteAddr, start.Format(time.RFC3339)))
 		h.ServeHTTP(w, r)

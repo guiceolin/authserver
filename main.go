@@ -164,8 +164,6 @@ func (s *server) routes() {
 
 func (s *server) handleNewUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger.LogRequest(r)
-
 		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -176,8 +174,6 @@ func (s *server) handleNewUser() http.HandlerFunc {
 
 func (s *server) handleCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger.LogRequest(r)
-
 		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -205,7 +201,6 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 			return
 		}
 
-		logger.Info(user.Errors)
 		renderWithTemplate(w, "users_new.html", user)
 	}
 }
@@ -213,7 +208,6 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 func (s *server) handleCreateSession() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger.LogRequest(r)
 
 		if isAuthenticated(r) {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
