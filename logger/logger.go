@@ -29,7 +29,7 @@ func logRequest(r *http.Request) {
 	if err != nil {
 		Info(err)
 	}
-	Info(string(requestDump))
+	Debug(string(requestDump))
 }
 
 func RequestMiddleware(h http.Handler) http.Handler {
