@@ -1,4 +1,7 @@
 {{define "content"}}
+{{if .Error}}
+<p class="red-text">{{.Error}}</p>
+{{end}}
 <form method="POST" action="/sessions">
   <div class="row">
     <div class="col s4 offset-s4">

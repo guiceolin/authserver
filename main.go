@@ -218,20 +218,23 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 
 		user := User{Email: r.FormValue("email")}
 		err := s.db.Read(&user, "Email")
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+		if err == nil && user.checkPassword(r.FormValue("password")) {
+			setCurrentUser(w, user)
+
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
-		}
 
-		if !user.checkPassword(r.FormValue("password")) {
-			w.WriteHeader(http.StatusUnauthorized)
+		} else {
+			data := struct {
+				Error string
+			}{
+				Error: "Invalid Credentials",
+			}
+
+			renderWithTemplate(w, "session_new.html", data)
 			return
+
 		}
-
-		setCurrentUser(w, user)
-
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
 	}
 }
 
