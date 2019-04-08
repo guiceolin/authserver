@@ -84,6 +84,53 @@ func (s *User) validate(db orm.Ormer) bool {
 	return len(s.Errors) == 0
 }
 
+func setRedirectUrl(w http.ResponseWriter, r *http.Request) {
+	redirectTo := r.URL.Query().Get("redirect_to")
+	if redirectTo != "" {
+		c := &http.Cookie{
+			Name:    "redirectTo",
+			Value:   redirectTo,
+			Path:    "/",
+			Expires: time.Now().Add(1 * time.Hour),
+			Domain:  viper.GetString("domain"),
+		}
+
+		http.SetCookie(w, c)
+	}
+}
+
+func getRedirectBackURL(w http.ResponseWriter, r *http.Request) *string {
+	redirectToFromParam := r.URL.Query().Get("redirect_to")
+	if redirectToFromParam != "" {
+		return &redirectToFromParam
+	}
+	redirectToCookie, err := r.Cookie("redirectTo")
+	if err == nil {
+		return &redirectToCookie.Value
+
+	}
+
+	return nil
+}
+
+func redirectBackOrTo(w http.ResponseWriter, r *http.Request, redirectTo string) {
+	c := &http.Cookie{
+		Name:   "redirectTo",
+		Path:   "/",
+		MaxAge: -1,
+		Domain: viper.GetString("domain"),
+	}
+
+	http.SetCookie(w, c)
+
+	redirectBackUrl := getRedirectBackURL(w, r)
+	if redirectBackUrl != nil {
+		redirectTo = *redirectBackUrl
+	}
+
+	http.Redirect(w, r, redirectTo, http.StatusSeeOther)
+}
+
 func renderWithTemplate(w http.ResponseWriter, templateName string, data interface{}) {
 	templateFile := fmt.Sprintf("templates/%s", templateName)
 	tmpl, err := template.New("").ParseFiles(templateFile, "templates/layout.html")
@@ -165,9 +212,12 @@ func (s *server) routes() {
 func (s *server) handleNewUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if isAuthenticated(r) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
+
+		setRedirectUrl(w, r)
+
 		renderWithTemplate(w, "users_new.html", nil)
 	}
 }
@@ -175,9 +225,11 @@ func (s *server) handleNewUser() http.HandlerFunc {
 func (s *server) handleCreateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if isAuthenticated(r) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
+
+		setRedirectUrl(w, r)
 
 		r.ParseForm()
 
@@ -197,7 +249,7 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 			}
 
 			setCurrentUser(w, user)
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
 
@@ -208,9 +260,8 @@ func (s *server) handleCreateUser() http.HandlerFunc {
 func (s *server) handleCreateSession() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if isAuthenticated(r) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
 
@@ -221,7 +272,7 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 		if err == nil && user.checkPassword(r.FormValue("password")) {
 			setCurrentUser(w, user)
 
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 
 		} else {
@@ -241,9 +292,11 @@ func (s *server) handleCreateSession() http.HandlerFunc {
 func (s *server) handleNewSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if isAuthenticated(r) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
+
+		setRedirectUrl(w, r)
 
 		renderWithTemplate(w, "session_new.html", nil)
 	}
@@ -252,7 +305,7 @@ func (s *server) handleNewSession() http.HandlerFunc {
 func (s *server) handleDeleteSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !isAuthenticated(r) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			redirectBackOrTo(w, r, "/")
 			return
 		}
 
@@ -264,13 +317,19 @@ func (s *server) handleDeleteSession() http.HandlerFunc {
 		}
 
 		http.SetCookie(w, c)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-
+		redirectBackOrTo(w, r, "/")
 	}
 }
 
 func (s *server) handleIndex() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		redirectBackUrl := getRedirectBackURL(w, r)
+		if redirectBackUrl != nil && isAuthenticated(r) {
+			redirectBackOrTo(w, r, "/")
+		}
+
+		setRedirectUrl(w, r)
+
 		data := struct {
 			CurrentUser *User
 		}{
