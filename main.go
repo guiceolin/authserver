@@ -306,5 +306,5 @@ func main() {
 		db:     orm.NewOrm()}
 	s.routes()
 
-	logger.Fatal(http.ListenAndServe(":"+viper.GetString("port"), s.router))
+	logger.Fatal(http.ListenAndServe(":"+viper.GetString("port"), logger.RequestMiddleware(s.router)))
 }
