@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
 	"github.com/guiceolin/authserver/jwt"
-	"github.com/guiceolin/authserver/logger"
+	"github.com/guiceolin/goub/logger"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
