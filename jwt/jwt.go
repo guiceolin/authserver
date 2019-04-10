@@ -5,24 +5,15 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/spf13/viper"
 )
 
-type Payload struct {
-	Id    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-type Claims struct {
-	Payload `json:"payload"`
+type claims struct {
+	Payload map[string]interface{} `json:"payload"`
 	jwt.StandardClaims
 }
 
-var jwtKey = []byte(viper.GetString("jwt_secret"))
-
-func BuildJWT(payload Payload, expirationTime time.Time) (string, error) {
-	claims := &Claims{
+func BuildJWT(jwtKey []byte, payload map[string]interface{}, expirationTime time.Time) (string, error) {
+	claims := &claims{
 		Payload: payload,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
@@ -32,11 +23,10 @@ func BuildJWT(payload Payload, expirationTime time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	return tokenString, err
-
 }
 
-func ValidateJWT(tknStr string) (*Payload, error) {
-	claims := &Claims{}
+func ValidateJWT(jwtKey []byte, tknStr string) (map[string]interface{}, error) {
+	claims := &claims{}
 	_, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
@@ -47,5 +37,5 @@ func ValidateJWT(tknStr string) (*Payload, error) {
 		return nil, err
 	}
 
-	return &claims.Payload, nil
+	return claims.Payload, nil
 }

@@ -143,12 +143,13 @@ func renderWithTemplate(w http.ResponseWriter, templateName string, data interfa
 func setCurrentUser(w http.ResponseWriter, user User) {
 	var expirationTime = time.Now().Add(5 * time.Hour)
 
-	payload := jwt.Payload{
-		Id:    user.Id,
-		Name:  user.Name,
-		Email: user.Email,
+	payload := map[string]interface{}{
+		"id":    user.Id,
+		"name":  user.Name,
+		"email": user.Email,
 	}
-	tokenString, err := jwt.BuildJWT(payload, expirationTime)
+	var jwtKey = []byte(viper.GetString("jwt_secret"))
+	tokenString, err := jwt.BuildJWT(jwtKey, payload, expirationTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -170,7 +171,8 @@ func isAuthenticated(r *http.Request) bool {
 		return false
 	}
 
-	_, err = jwt.ValidateJWT(c.Value)
+	var jwtKey = []byte(viper.GetString("jwt_secret"))
+	_, err = jwt.ValidateJWT(jwtKey, c.Value)
 	if err != nil {
 		return false
 	}
@@ -183,13 +185,14 @@ func (s *server) getCurrentUser(r *http.Request) *User {
 		return nil
 	}
 
-	payload, err := jwt.ValidateJWT(c.Value)
+	var jwtKey = []byte(viper.GetString("jwt_secret"))
+	payload, err := jwt.ValidateJWT(jwtKey, c.Value)
 	if err != nil {
 		return nil
 	}
 
 	user := User{
-		Id: payload.Id,
+		Id: int(payload["id"].(float64)),
 	}
 	err = s.db.Read(&user)
 	if err != nil {
