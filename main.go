@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
-	"github.com/guiceolin/authserver/jwt"
+	"github.com/guiceolin/goub/jwt"
 	"github.com/guiceolin/goub/logger"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"

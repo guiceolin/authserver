@@ -3,8 +3,9 @@ module github.com/guiceolin/authserver
 go 1.12
 
 require (
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/astaxie/beego v1.11.1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/guiceolin/goub/jwt v0.0.1
 	github.com/guiceolin/goub/logger v0.0.1
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/lib/pq v1.0.0
