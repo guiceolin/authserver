@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/astaxie/beego v1.12.1
-	github.com/belogik/goes v0.0.0-20151229125003-e54d722c3aff // indirect
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/guiceolin/goub/jwt v0.0.1
